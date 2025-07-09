@@ -10,7 +10,21 @@ const corsHeaders = {
     "Access-Control-Allow-Methods": "POST, GET, PUT, OPTIONS"
 }
 
+const cached = global.mongoose
 
+async function dbConnect() {
+    if (cached.conn) {
+        return cached.conn
+    }
+
+    if (!cached.promise) {
+        cached.promise = mongoose.connect(mongoDB, {
+            bufferCommands: false,
+        }).then(m => m)
+    }
+    cached.conn = await cached.promise
+    return cached.conn
+}
 
 export const handler = async (event, context) => {
     if (event.httpMethod === 'OPTIONS') {
@@ -22,7 +36,8 @@ export const handler = async (event, context) => {
     }
 
     try {
-        await mongoose.connect(mongoDB)
+        await dbConnect()
+        console.log('Connected')
 
         if (event.httpMethod === 'GET') {
             const id = event.queryStringParameters.postId
