@@ -2,6 +2,7 @@ import mongoose from 'mongoose'
 import Likes from '../model/likes'
 
 const mongoDB = process.env.MONGOURI
+console.log(mongoDB)
 
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
@@ -9,14 +10,7 @@ const corsHeaders = {
     "Access-Control-Allow-Methods": "POST, GET, PUT, OPTIONS"
 }
 
-let connection = null
 
-async function connectToDB() {
-    if (!connection) {
-        connection = mongoose.connect(mongoDB)
-        await connection
-    }
-}
 
 export const handler = async (event, context) => {
     if (event.httpMethod === 'OPTIONS') {
@@ -28,7 +22,7 @@ export const handler = async (event, context) => {
     }
 
     try {
-        await connectToDB()
+        await mongoose.connect(mongoDB)
 
         if (event.httpMethod === 'GET') {
             const id = event.queryStringParameters.postId
