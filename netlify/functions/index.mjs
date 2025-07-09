@@ -2,13 +2,15 @@ import mongoose from 'mongoose'
 import Likes from '../model/likes'
 
 const mongoDB = process.env.MONGOURI
+
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "Content-Type",
-    "Access-Control-Allow-Methods": "POST, OPTIONS"
+    "Access-Control-Allow-Methods": "POST, GET, PUT, OPTIONS"
 }
 
 let connection = null
+
 async function connectToDB() {
     if (!connection) {
         connection = mongoose.connect(mongoDB)
@@ -17,7 +19,6 @@ async function connectToDB() {
 }
 
 export const handler = async (event, context) => {
-
     if (event.httpMethod === 'OPTIONS') {
         return {
             statusCode: 200,
@@ -31,61 +32,73 @@ export const handler = async (event, context) => {
 
         if (event.httpMethod === 'GET') {
             const id = event.queryStringParameters.postId
+            const likes = await Likes.find({ postId: id })
 
-            const likes = await Likes.find({ postId: id });
-            if (likes) {
-                return {
-                    statusCode: 200,
-                    body: JSON.stringify(likes),
-                }
-            } else {
-                return {
-                    statusCode: 404,
-                    body: JSON.stringify({ error: "Resource does not exist in the database." })
-                }
+            return {
+                statusCode: likes ? 200 : 404,
+                headers: corsHeaders,
+                body: JSON.stringify(
+                    likes || { error: "Resource does not exist in the database." }
+                )
             }
         }
 
         if (event.httpMethod === 'POST') {
             const { postId } = JSON.parse(event.body)
-            const currLike = await Likes.findOneAndUpdate({ postId }, { $inc: { count: 1 } }, { new: true })
+            const currLike = await Likes.findOneAndUpdate(
+                { postId },
+                { $inc: { count: 1 } },
+                { new: true }
+            )
 
             if (currLike) {
                 return {
                     statusCode: 200,
-                    body: JSON.stringify(currLike),
+                    headers: corsHeaders,
+                    body: JSON.stringify(currLike)
                 }
-            } else {
+            }
 
-                const newLike = await Likes.create({
-                    postId,
-                    count: 1
-                })
+            const newLike = await Likes.create({ postId, count: 1 })
 
-                return {
-                    statusCode: 201,
-                    body: JSON.stringify(newLike)
-                }
+            return {
+                statusCode: 201,
+                headers: corsHeaders,
+                body: JSON.stringify(newLike)
             }
         }
 
         if (event.httpMethod === 'PUT') {
             const { postId } = JSON.parse(event.body)
-            const currLike = await Likes.findOneAndUpdate({ postId, count: { $gt: 0 } }, { $inc: { count: -1 } }, { new: true })
+            const currLike = await Likes.findOneAndUpdate(
+                { postId, count: { $gt: 0 } },
+                { $inc: { count: -1 } },
+                { new: true }
+            )
 
             return {
                 statusCode: 200,
-                body: JSON.stringify(currLike),
+                headers: corsHeaders,
+                body: JSON.stringify(currLike)
             }
         }
 
+        // 🚫 Unsupported HTTP method
+        return {
+            statusCode: 405,
+            headers: corsHeaders,
+            body: JSON.stringify({ error: 'Method Not Allowed' })
+        }
 
     } catch (error) {
-        if (error instanceof Error) {
-            console.error(error.message)
-        } else {
-            console.error(error)
+        console.error('Function error:', error)
+
+        return {
+            statusCode: 500,
+            headers: corsHeaders,
+            body: JSON.stringify({
+                error: error instanceof Error ? error.message : 'Internal Server Error'
+            })
         }
     }
-
 }
