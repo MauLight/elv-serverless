@@ -10,7 +10,7 @@ const corsHeaders = {
     "Access-Control-Allow-Methods": "POST, GET, PUT, OPTIONS"
 }
 
-const cached = global.mongoose
+const cached = global.mongoose || { conn: null, promise: null }
 
 async function dbConnect() {
     if (cached.conn) {
