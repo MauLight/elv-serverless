@@ -22,5 +22,5 @@ LikesSchema.set('toJSON', {
     }
 })
 
-const Likes = mongoose.models ? mongoose.models.Likes : mongoose.model('Likes', LikesSchema)
-export default Likes || mongoose.model('Likes', LikesSchema)
+const Likes = mongoose.model('Likes', LikesSchema)
+export default Likes
