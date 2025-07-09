@@ -1,0 +1,5 @@
+secret:
+  ignored_matches:
+  - match: 0b69605746398c326bc89521070aa0f368beeefdf65f2636767faa0398dc9657
+    name: MongoDB URI - .env:l.0
+version: 2
